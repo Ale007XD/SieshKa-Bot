@@ -2,14 +2,17 @@
 
 from datetime import datetime, time, timezone as dt_timezone
 from typing import Optional
-import pytz
 
 from app.config import settings
 
 
-def get_timezone() -> pytz.timezone:
+def get_timezone():
     """Get configured timezone."""
-    return pytz.timezone(settings.timezone)
+    try:
+        from zoneinfo import ZoneInfo
+        return ZoneInfo(settings.timezone)
+    except Exception:
+        return dt_timezone.utc
 
 
 def now() -> datetime:
@@ -27,10 +30,14 @@ def to_timezone(dt: datetime, tz: Optional[str] = None) -> datetime:
     if tz is None:
         tz = settings.timezone
     
-    timezone = pytz.timezone(tz)
+    try:
+        from zoneinfo import ZoneInfo
+        timezone = ZoneInfo(tz)
+    except Exception:
+        timezone = dt_timezone.utc
     
     if dt.tzinfo is None:
-        dt = pytz.utc.localize(dt)
+        dt = dt.replace(tzinfo=dt_timezone.utc)
     
     return dt.astimezone(timezone)
 

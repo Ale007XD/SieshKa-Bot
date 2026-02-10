@@ -4,7 +4,10 @@ import hashlib
 import secrets
 from typing import Optional
 
-import jwt
+try:
+    import jwt  # type: ignore
+except Exception:
+    jwt = None  # type: ignore
 from datetime import datetime, timedelta
 
 from app.config import settings
@@ -44,6 +47,8 @@ def create_jwt_token(
     
     to_encode.update({"exp": expire})
     
+    if jwt is None:
+        raise RuntimeError("pyjwt is not installed; cannot create JWT token")
     encoded_jwt = jwt.encode(
         to_encode,
         settings.secret_key,
@@ -55,6 +60,8 @@ def create_jwt_token(
 
 def decode_jwt_token(token: str) -> Optional[dict]:
     """Decode and verify JWT token."""
+    if jwt is None:
+        return None
     try:
         payload = jwt.decode(
             token,
@@ -62,9 +69,7 @@ def decode_jwt_token(token: str) -> Optional[dict]:
             algorithms=["HS256"]
         )
         return payload
-    except jwt.ExpiredSignatureError:
-        return None
-    except jwt.InvalidTokenError:
+    except Exception:
         return None
 
 

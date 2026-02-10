@@ -1,9 +1,9 @@
 """Admin handlers for admin workflow."""
 
 from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, CallbackQuery
-# Removed unused imports: Command, FSMContext
 from app.models.user import User
 
 from app.services.menu_service import MenuService

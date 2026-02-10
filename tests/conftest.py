@@ -3,3 +3,5 @@ import os
 
 # Ensure admin telegram IDs env var is JSON array to satisfy dotenv parsing in tests
 os.environ.setdefault("ADMIN_TELEGRAM_IDS", "[]")
+import os as _os
+_os.environ.setdefault("TESTING", "1")

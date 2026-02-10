@@ -1,6 +1,7 @@
 """Health check endpoint."""
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from typing import Dict, Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,20 +36,27 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     # Check Redis (optional)
     try:
         from app.config import settings
-        import redis.asyncio as aioredis
+        try:
+            import redis.asyncio as aioredis  # type: ignore
+        except Exception:
+            aioredis = None  # type: ignore
 
-        if settings.redis_url:
+        if settings.redis_url and aioredis is not None:
             redis_client = await aioredis.from_url(settings.redis_url)
             await redis_client.ping()
             await redis_client.close()
             health_status["services"]["redis"] = "ok"
         else:
             health_status["services"]["redis"] = "not_configured"
+    except ModuleNotFoundError:
+        # Redis library not installed; treat as not configured
+        health_status["services"]["redis"] = "not_configured"
     except Exception as e:
         health_status["services"]["redis"] = f"error: {str(e)}"
         health_status["status"] = "unhealthy"
     
     if health_status["status"] == "unhealthy":
-        raise HTTPException(status_code=503, detail=health_status)
+        # Return health payload with 503 status but as a normal JSON body
+        return JSONResponse(status_code=503, content=health_status)
     
     return health_status

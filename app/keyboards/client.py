@@ -115,6 +115,13 @@ def get_cart_keyboard(items: List[CartItem]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
+def get_checkout_keyboard() -> InlineKeyboardMarkup:
+    """Get checkout keyboard for client flow."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💳 Оформить заказ", callback_data="checkout")],
+        [InlineKeyboardButton(text="◀️ Продолжить покупки", callback_data="view_menu")]
+    ])
+
 def get_payment_methods_keyboard(methods: List[tuple]) -> InlineKeyboardMarkup:
     """Get payment methods keyboard."""
     buttons = []
