@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+import asyncio
 from typing import Dict, Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +28,10 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     # Check database
     try:
         result = await db.execute(text("SELECT 1"))
-        if result.scalar() == 1:
+        scalar = result.scalar()
+        if asyncio.iscoroutine(scalar):
+            scalar = await scalar
+        if scalar == 1:
             health_status["services"]["database"] = "ok"
     except Exception as e:
         health_status["services"]["database"] = f"error: {str(e)}"
