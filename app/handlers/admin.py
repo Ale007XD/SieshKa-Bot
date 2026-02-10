@@ -28,7 +28,7 @@ from app.keyboards.admin import (
 from app.keyboards.common import confirm_keyboard
 from app.utils.enums import UserRole, OrderStatus
 from app.states.admin import AdminStates
-from app.templates import Templates
+from app.utils.templates import Templates
 
 router = Router()
 
