@@ -7,6 +7,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+try:
+    from app.api.v1.dependencies_jwt import get_current_user_jwt
+except Exception:
+    async def get_current_user_jwt():  # type: ignore
+        raise HTTPException(401, detail="Authentication not configured")
 from app.api.v1.dependency_utils import normalize_user
 from app.services.user_service import UserService
 from app.utils.security import decode_jwt_token
