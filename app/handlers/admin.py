@@ -5,7 +5,12 @@ try:
     from aiogram.fsm.context import FSMContext
 except Exception:
     class FSMContext:
-        pass
+        async def set_state(self, *args, **kwargs):
+            pass
+        async def update_data(self, *args, **kwargs):
+            pass
+        async def get_data(self):
+            return {}
 try:
     from aiogram.fsm.context import FSMContext
 except Exception:
@@ -15,6 +20,16 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, CallbackQuery
 from app.models.user import User
+try:
+    from app.utils.permissions import ensure_admin
+except Exception:
+    def ensure_admin(_):  # type: ignore
+        raise RuntimeError("Admin permission check unavailable")
+try:
+    from app.utils.permissions import ensure_admin
+except Exception:
+    def ensure_admin(_):  # type: ignore
+        pass
 
 from app.services.menu_service import MenuService
 from app.services.archive_service import ArchiveService
@@ -117,6 +132,11 @@ async def archive_management(callback: CallbackQuery, session: AsyncSession) -> 
 @router.callback_query(F.data.startswith("archive:category:"))
 async def unarchive_category(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
     """Unarchive category."""
+    try:
+        ensure_admin(user)
+    except Exception:
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     category_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
     
@@ -137,6 +157,11 @@ async def unarchive_category(callback: CallbackQuery, session: AsyncSession, use
 @router.callback_query(F.data.startswith("archive:product:"))
 async def unarchive_product(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
     """Unarchive product."""
+    try:
+        ensure_admin(user)
+    except Exception:
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     product_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
     
