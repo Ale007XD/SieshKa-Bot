@@ -1,35 +1,13 @@
 """Admin handlers for admin workflow."""
 
 from aiogram import Router, F
-try:
-    from aiogram.fsm.context import FSMContext
-except Exception:
-    class FSMContext:
-        async def set_state(self, *args, **kwargs):
-            pass
-        async def update_data(self, *args, **kwargs):
-            pass
-        async def get_data(self):
-            return {}
-try:
-    from aiogram.fsm.context import FSMContext
-except Exception:
-    class FSMContext:  # type: ignore
-        pass
-from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram.types import Message, CallbackQuery
+
 from app.models.user import User
-try:
-    from app.utils.permissions import ensure_admin
-except Exception:
-    def ensure_admin(_):  # type: ignore
-        raise RuntimeError("Admin permission check unavailable")
-try:
-    from app.utils.permissions import ensure_admin
-except Exception:
-    def ensure_admin(_):  # type: ignore
-        pass
+from app.utils.admin_guard import is_admin_callback, is_admin_message
+from app.config import settings
+from app.utils.permissions import ensure_admin
 
 from app.services.menu_service import MenuService
 from app.services.archive_service import ArchiveService
@@ -53,134 +31,117 @@ from app.states.admin import AdminStates
 
 router = Router()
 
+def _require_admin_callback(callback: CallbackQuery) -> bool:
+    return is_admin_callback(callback)
+
+def _require_admin_message(message: Message) -> bool:
+    return is_admin_message(message)
+
+def _admin_guard(callback_or_message) -> bool:
+    if isinstance(callback_or_message, CallbackQuery):
+        return _require_admin_callback(callback_or_message)
+    if isinstance(callback_or_message, Message):
+        return _require_admin_message(callback_or_message)
+    return False
 
 # Main admin menu
 @router.message(F.text == "👑 Админ-панель")
 async def admin_panel(message: Message):
     """Show admin panel."""
+    if not _admin_guard(message):
+        await message.answer("❌ Access denied (admin only)")
+        return
     await message.answer(
         Templates.admin_panel(),
         reply_markup=get_admin_menu_keyboard()
     )
 
-
-# Menu management
 @router.callback_query(F.data == "admin:menu")
 async def menu_management(callback: CallbackQuery, session: AsyncSession) -> None:
-    """Show menu management."""
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     await callback.message.edit_text(
         "📋 Управление меню",
         reply_markup=get_menu_management_keyboard()
     )
 
-
 @router.callback_query(F.data == "admin:categories")
 async def category_management(callback: CallbackQuery, session: AsyncSession) -> None:
-    """Show category management."""
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     menu_service = MenuService(session)
     categories = await menu_service.get_all_categories(
         include_inactive=True,
         include_archived=False
     )
-    
     await callback.message.edit_text(
         f"📁 Категории ({len(categories)})",
         reply_markup=get_category_management_keyboard(categories)
     )
 
-
 @router.callback_query(F.data == "admin:products")
 async def product_management(callback: CallbackQuery, session: AsyncSession) -> None:
-    """Show product management."""
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     menu_service = MenuService(session)
     categories = await menu_service.get_all_categories()
-    
     await callback.message.edit_text(
         "🍽 Управление товарами",
         reply_markup=get_product_management_keyboard(categories)
     )
 
-
-# Archive management
 @router.callback_query(F.data == "admin:archive")
 async def archive_management(callback: CallbackQuery, session: AsyncSession) -> None:
-    """Show archive management."""
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     archive_service = ArchiveService(session)
-    
     archived_categories = await archive_service.get_archived_categories()
     archived_products = await archive_service.get_archived_products()
-    
     text = (
         "📦 Управление архивом\n\n"
         f"Архивировано категорий: {len(archived_categories)}\n"
         f"Архивировано товаров: {len(archived_products)}"
     )
-    
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_archive_management_keyboard(
-            archived_categories,
-            archived_products
-        )
-    )
-
+    await callback.message.edit_text(text, reply_markup=get_archive_management_keyboard(archived_categories, archived_products))
 
 @router.callback_query(F.data.startswith("archive:category:"))
 async def unarchive_category(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    """Unarchive category."""
-    try:
-        ensure_admin(user)
-    except Exception:
+    if not _admin_guard(callback):
         await callback.answer("❌ Access denied", show_alert=True)
         return
     category_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
-    
     try:
-        await archive_service.unarchive_category(
-            category_id=category_id,
-            actor_user_id=user.id,
-            cascade_option="with_descendants"
-        )
+        await archive_service.unarchive_category(category_id=category_id, actor_user_id=user.id, cascade_option="with_descendants")
         await callback.answer("✅ Категория разархивирована")
-        
-        # Refresh view
         await archive_management(callback, session)
     except Exception as e:
         await callback.answer(f"❌ Ошибка: {str(e)}", show_alert=True)
 
-
 @router.callback_query(F.data.startswith("archive:product:"))
 async def unarchive_product(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
-    """Unarchive product."""
-    try:
-        ensure_admin(user)
-    except Exception:
+    if not _admin_guard(callback):
         await callback.answer("❌ Access denied", show_alert=True)
         return
     product_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
-    
     try:
-        await archive_service.unarchive_product(
-            product_id=product_id,
-            actor_user_id=user.id
-        )
+        await archive_service.unarchive_product(product_id=product_id, actor_user_id=user.id)
         await callback.answer("✅ Товар разархивирован")
-        
-        # Refresh view
         await archive_management(callback, session)
     except Exception as e:
         await callback.answer(f"❌ Ошибка: {str(e)}", show_alert=True)
 
-
 @router.callback_query(F.data.startswith("unarchive_cat:"))
 async def confirm_unarchive_category(callback: CallbackQuery) -> None:
-    """Confirm unarchive category."""
     category_id = int(callback.data.split(":")[1])
     await callback.answer()
     await callback.message.edit_text(
@@ -188,95 +149,24 @@ async def confirm_unarchive_category(callback: CallbackQuery) -> None:
         reply_markup=confirm_keyboard(f"confirm_unarchive_cat:{category_id}")
     )
 
-
-# Staff management
 @router.callback_query(F.data == "admin:staff")
-async def staff_management(callback: CallbackQuery, session: AsyncSession):
-    """Show staff management."""
+async def staff_management(callback: CallbackQuery, session: AsyncSession) -> None:
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     user_service = UserService(session)
     staff = await user_service.get_staff_users()
-    
     await callback.message.edit_text(
         f"👥 Персонал ({len(staff)})",
         reply_markup=get_staff_management_keyboard(staff)
     )
 
-
 @router.callback_query(F.data == "staff:add")
-async def add_staff_start(callback: CallbackQuery, state: FSMContext):
-    """Start adding staff."""
+async def add_staff_start(callback: CallbackQuery, state) -> None:
+    if not _admin_guard(callback):
+        await callback.answer("❌ Access denied", show_alert=True)
+        return
     await callback.answer()
     await state.set_state(AdminStates.staff_add_user_id)
-    await callback.message.edit_text(
-        "Введите Telegram ID пользователя:"
-    )
-
-
-@router.message(AdminStates.staff_add_user_id)
-async def process_staff_id(message: Message, state: FSMContext):
-    """Process staff Telegram ID."""
-    try:
-        telegram_id = int(message.text.strip())
-        await state.update_data(telegram_id=telegram_id)
-        await state.set_state(AdminStates.staff_select_role)
-        
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="📋 Менеджер", callback_data="role:manager")],
-            [InlineKeyboardButton(text="👨‍🍳 Кухня", callback_data="role:kitchen")],
-            [InlineKeyboardButton(text="📦 Упаковщик", callback_data="role:packer")],
-            [InlineKeyboardButton(text="🚚 Курьер", callback_data="role:courier")],
-            [InlineKeyboardButton(text="◀️ Отмена", callback_data="cancel")]
-        ])
-        
-        await message.answer("Выберите роль:", reply_markup=keyboard)
-    except ValueError:
-        await message.answer("❌ Неверный ID. Введите число:")
-
-
-# Order management
-@router.callback_query(F.data == "admin:orders")
-async def order_management(callback: CallbackQuery, session: AsyncSession):
-    """Show order management."""
-    await callback.answer()
-    order_service = OrderService(session)
-    
-    # Get counts by status (single query)
-    status_counts = await order_service.get_order_counts_by_status([
-        OrderStatus.NEW, OrderStatus.CONFIRMED, OrderStatus.IN_PROGRESS
-    ])
-    
-    text = (
-        "📦 Управление заказами\n\n"
-        f"🆕 Новые: {status_counts.get(OrderStatus.NEW.value, 0)}\n"
-        f"✅ Подтверждены: {status_counts.get(OrderStatus.CONFIRMED.value, 0)}\n"
-        f"👨‍🍳 Готовятся: {status_counts.get(OrderStatus.IN_PROGRESS.value, 0)}"
-    )
-    
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_order_management_keyboard()
-    )
-
-
-# Statistics
-@router.callback_query(F.data == "admin:stats")
-async def statistics(callback: CallbackQuery, session: AsyncSession):
-    """Show statistics menu."""
-    await callback.answer()
-    stats_service = StatsService(session)
-    daily = await stats_service.get_daily_stats()
-    
-    text = (
-        f"📊 Статистика на {daily['date']}\n\n"
-        f"📦 Заказов: {daily['total_orders']}\n"
-        f"💰 Выручка: {daily['total_revenue']:.2f} ₽\n"
-        f"💵 Средний чек: {daily['average_order_value']:.2f} ₽"
-    )
-    
-    await callback.message.edit_text(
-        text,
-        reply_markup=get_statistics_keyboard()
-    )
+    await callback.message.edit_text("Введите Telegram ID пользователя:")
