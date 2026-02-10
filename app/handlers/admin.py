@@ -1,6 +1,16 @@
 """Admin handlers for admin workflow."""
 
 from aiogram import Router, F
+try:
+    from aiogram.fsm.context import FSMContext
+except Exception:
+    class FSMContext:
+        pass
+try:
+    from aiogram.fsm.context import FSMContext
+except Exception:
+    class FSMContext:  # type: ignore
+        pass
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from aiogram.types import Message, CallbackQuery
@@ -41,7 +51,7 @@ async def admin_panel(message: Message):
 
 # Menu management
 @router.callback_query(F.data == "admin:menu")
-async def menu_management(callback: CallbackQuery, session: AsyncSession):
+async def menu_management(callback: CallbackQuery, session: AsyncSession) -> None:
     """Show menu management."""
     await callback.answer()
     await callback.message.edit_text(
@@ -51,7 +61,7 @@ async def menu_management(callback: CallbackQuery, session: AsyncSession):
 
 
 @router.callback_query(F.data == "admin:categories")
-async def category_management(callback: CallbackQuery, session: AsyncSession):
+async def category_management(callback: CallbackQuery, session: AsyncSession) -> None:
     """Show category management."""
     await callback.answer()
     menu_service = MenuService(session)
@@ -67,7 +77,7 @@ async def category_management(callback: CallbackQuery, session: AsyncSession):
 
 
 @router.callback_query(F.data == "admin:products")
-async def product_management(callback: CallbackQuery, session: AsyncSession):
+async def product_management(callback: CallbackQuery, session: AsyncSession) -> None:
     """Show product management."""
     await callback.answer()
     menu_service = MenuService(session)
@@ -81,7 +91,7 @@ async def product_management(callback: CallbackQuery, session: AsyncSession):
 
 # Archive management
 @router.callback_query(F.data == "admin:archive")
-async def archive_management(callback: CallbackQuery, session: AsyncSession):
+async def archive_management(callback: CallbackQuery, session: AsyncSession) -> None:
     """Show archive management."""
     await callback.answer()
     archive_service = ArchiveService(session)
@@ -105,7 +115,7 @@ async def archive_management(callback: CallbackQuery, session: AsyncSession):
 
 
 @router.callback_query(F.data.startswith("archive:category:"))
-async def unarchive_category(callback: CallbackQuery, session: AsyncSession, user: User):
+async def unarchive_category(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
     """Unarchive category."""
     category_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
@@ -125,7 +135,7 @@ async def unarchive_category(callback: CallbackQuery, session: AsyncSession, use
 
 
 @router.callback_query(F.data.startswith("archive:product:"))
-async def unarchive_product(callback: CallbackQuery, session: AsyncSession, user: User):
+async def unarchive_product(callback: CallbackQuery, session: AsyncSession, user: User) -> None:
     """Unarchive product."""
     product_id = int(callback.data.split(":")[2])
     archive_service = ArchiveService(session)
@@ -144,7 +154,7 @@ async def unarchive_product(callback: CallbackQuery, session: AsyncSession, user
 
 
 @router.callback_query(F.data.startswith("unarchive_cat:"))
-async def confirm_unarchive_category(callback: CallbackQuery):
+async def confirm_unarchive_category(callback: CallbackQuery) -> None:
     """Confirm unarchive category."""
     category_id = int(callback.data.split(":")[1])
     await callback.answer()
