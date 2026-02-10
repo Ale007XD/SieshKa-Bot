@@ -1,0 +1,50 @@
+"""Main FastAPI application entry point."""
+
+import sys
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1.endpoints import health, auth, menu, orders, settings
+from app.config import settings
+from app.database import close_db, init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    # Startup
+    await init_db()
+    yield
+    # Shutdown
+    await close_db()
+
+
+app = FastAPI(
+    title="Food Delivery API",
+    description="REST API for Food Delivery Telegram Bot",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(menu.router, prefix="/api/v1/menu", tags=["menu"])
+app.include_router(orders.router, prefix="/api/v1/orders", tags=["orders"])
+app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

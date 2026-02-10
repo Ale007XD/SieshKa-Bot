@@ -1,0 +1,58 @@
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+htmlcov
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment (except example)
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+tests/
+
+# Scripts (keep only necessary)
+scripts/*.sh
+scripts/backup/*.sh
+
+# Local data
+backups/
+*.dump
+*.gz
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,45 @@
+# Core Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# Telegram Bot
+aiogram==3.4.1
+
+# Database
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Cache & Tasks
+redis==5.0.1
+celery==5.3.6
+
+# Validation & Serialization
+pydantic==2.6.1
+pydantic-settings==2.1.0
+
+# HTTP Client
+aiohttp==3.9.3
+
+# Logging
+structlog==24.1.0
+
+# Utilities
+python-dotenv==1.0.1
+pytz==2024.1
+python-multipart==0.0.6
+
+# Security
+bcrypt==4.1.2
+PyJWT==2.8.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.5
+httpx==0.26.0
+
+# Development
+black==24.1.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0

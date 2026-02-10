@@ -1,0 +1,22 @@
+#!/bin/bash
+# Restore instructions script
+
+echo "================================================"
+echo "Database Restore Instructions"
+echo "================================================"
+echo ""
+echo "To restore a backup, run:"
+echo ""
+echo "1. Copy backup file to container:"
+echo "   docker cp backup_file.dump.gz <container>:/tmp/"
+echo ""
+echo "2. Decompress backup:"
+echo "   gunzip /tmp/backup_file.dump.gz"
+echo ""
+echo "3. Restore database:"
+echo "   pg_restore -h postgres -U food_delivery -d food_delivery --clean /tmp/backup_file.dump"
+echo ""
+echo "Or use interactive restore:"
+echo "   pg_restore -h postgres -U food_delivery -d food_delivery --clean --verbose /tmp/backup_file.dump"
+echo ""
+echo "================================================"

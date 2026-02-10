@@ -1,0 +1,90 @@
+"""Common handlers for all users."""
+
+from aiogram import Router, F
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.user import User
+from aiogram.types import Message, CallbackQuery
+from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
+
+from app.services.user_service import UserService
+from app.utils.templates import Templates
+from app.keyboards.common import get_main_menu_keyboard
+from app.keyboards.client import get_client_menu_keyboard
+from app.keyboards.admin import get_admin_menu_keyboard
+from app.keyboards.staff import get_staff_menu_keyboard
+
+router = Router()
+
+
+@router.message(CommandStart())
+async def cmd_start(message: Message, session: AsyncSession, user: User):
+    """Handle /start command."""
+    await message.answer(
+        Templates.welcome_message(user.first_name or "Друг"),
+        reply_markup=get_main_menu_keyboard(user)
+    )
+
+
+@router.message(Command("help"))
+async def cmd_help(message: Message):
+    """Handle /help command."""
+    await message.answer(Templates.help_message())
+
+
+@router.message(F.text == "◀️ Назад")
+async def back_handler(message: Message, state: FSMContext, user: User) -> None:
+    """Handle back button."""
+    await state.clear()
+    
+    if user.is_admin():
+        await message.answer(
+            "👑 Панель администратора",
+            reply_markup=get_admin_menu_keyboard()
+        )
+    elif user.is_staff():
+        await message.answer(
+            f"🔧 Панель {user.role}",
+            reply_markup=get_staff_menu_keyboard(user.role)
+        )
+    else:
+        await message.answer(
+            "👋 Главное меню",
+            reply_markup=get_client_menu_keyboard()
+        )
+
+
+@router.callback_query(F.data == "back")
+async def back_callback(callback: CallbackQuery, state: FSMContext, user: User) -> None:
+    """Handle back callback."""
+    await callback.answer()
+    await state.clear()
+    
+    if user.is_admin():
+        await callback.message.edit_text(
+            "👑 Панель администратора",
+            reply_markup=get_admin_menu_keyboard()
+        )
+    elif user.is_staff():
+        await callback.message.edit_text(
+            f"🔧 Панель {user.role}",
+            reply_markup=get_staff_menu_keyboard(user.role)
+        )
+    else:
+        await callback.message.edit_text(
+            "👋 Главное меню",
+            reply_markup=get_client_menu_keyboard()
+        )
+
+
+@router.message(Command("cancel"))
+@router.message(F.text == "❌ Отмена")
+async def cmd_cancel(message: Message, state: FSMContext):
+    """Cancel current operation."""
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.answer("Нет активных операций для отмены.")
+        return
+    
+    await state.clear()
+    await message.answer("✅ Операция отменена.")

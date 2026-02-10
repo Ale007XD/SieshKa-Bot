@@ -1,0 +1,6 @@
+# Project: Food Delivery Telegram Bot
+# Code Language: English (identifiers, filenames, comments)
+# User-facing: Russian (Telegram UI)
+
+__version__ = "1.0.0"
+VERSION = "1.0.0"
