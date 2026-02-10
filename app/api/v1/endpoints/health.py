@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("")
-async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def health_check(db: AsyncSession = Depends(get_db)) -> Any:
     """Health check endpoint verifying database and service status."""
     health_status = {
         "status": "healthy",
@@ -22,7 +22,9 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
             "api": "ok",
             "database": "unknown",
             "redis": "unknown"
-        }
+        },
+        # Collect non-blocking warnings to aid debugging without failing health checks
+        "warnings": []
     }
     
     # Check database
@@ -36,6 +38,11 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     except Exception as e:
         health_status["services"]["database"] = f"error: {str(e)}"
         health_status["status"] = "unhealthy"
+        health_status["warnings"].append({
+            "service": "database",
+            "level": "warning",
+            "message": str(e)
+        })
     
     # Check Redis (optional)
     try:
@@ -55,9 +62,19 @@ async def health_check(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
     except ModuleNotFoundError:
         # Redis library not installed; treat as not configured
         health_status["services"]["redis"] = "not_configured"
+        health_status["warnings"].append({
+            "service": "redis",
+            "level": "warning",
+            "message": "Redis library not installed"
+        })
     except Exception as e:
         health_status["services"]["redis"] = f"error: {str(e)}"
         health_status["status"] = "unhealthy"
+        health_status["warnings"].append({
+            "service": "redis",
+            "level": "warning",
+            "message": str(e)
+        })
     
     if health_status["status"] == "unhealthy":
         # Return health payload with 503 status but as a normal JSON body
