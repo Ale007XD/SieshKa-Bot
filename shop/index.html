@@ -1,35 +1,30 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Order from Mobile</title>
+  <title>Shop</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main class="container">
-    <h1>Order</h1>
-    <form id="orderForm" autocomplete="off">
-      <label>Name</label>
-      <input class="input" type="text" id="name" required />
-      <label>Phone</label>
-      <input class="input" type="tel" id="phone" required />
-      <label>Address</label>
-      <input class="input" type="text" id="address" required />
-      <label>Item</label>
-      <select class="input" id="item" required>
-        <option value="burger">Burger</option>
-        <option value="pizza">Pizza</option>
-        <option value="sushi">Sushi</option>
-      </select>
-      <label>Quantity</label>
-      <input class="input" type="number" id="quantity" value="1" min="1" required />
-      <label>Notes</label>
-      <textarea class="input" id="notes"></textarea>
-      <button class="btn" type="submit">Place Order</button>
-    </form>
-    <div id="status" class="status" aria-live="polite"></div>
-  </main>
+  <div class="container">
+    <h1>Shop</h1>
+    <div id="products"></div>
+    <div id="order" style="display:none;">
+      <h2>Place Guest Order</h2>
+      <form id="guestForm">
+        <label>Name: <input id="name" required /></label><br/>
+        <label>Phone: <input id="phone" required /></label><br/>
+        <label>Address: <input id="address" required /></label><br/>
+        <label>Product:
+          <select id="product"></select>
+        </label><br/>
+        <label>Quantity: <input id="qty" type="number" min="1" value="1"/></label><br/>
+        <button type="submit">Order</button>
+      </form>
+      <div id="status"></div>
+    </div>
+  </div>
   <script src="script.js"></script>
 </body>
 </html>

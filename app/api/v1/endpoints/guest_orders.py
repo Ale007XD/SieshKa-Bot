@@ -1,5 +1,8 @@
 """Guest (unauthenticated) orders API endpoints."""
 
+import logging
+logger = logging.getLogger(__name__)
+
 from typing import List
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
@@ -37,20 +40,25 @@ async def _notify_order(order_id: int, order: GuestOrderCreate):  # pragma: no c
     try:
         token = getattr(settings, "telegram_bot_token", None)
         chat_id = getattr(settings, "order_telegram_chat_id", None)
-        if not token or not chat_id:
-            return
-        import httpx  # imported lazily to avoid a hard dependency in tests
         text = (
             f"New guest order #{order_id} from {order.name}, {order.phone}.\n"
             f"Address: {order.address}\n"
             f"Items: {', '.join([f'{it.quantity}x {it.product_id}' for it in order.items])}"
         )
+        if not token or not chat_id:
+            logger.info("Telegram not configured (token or chat_id missing); skipping notification for order %s", order_id)
+            return
+        import httpx  # imported lazily to avoid a hard dependency in tests
         url = f"https://api.telegram.org/bot{token}/sendMessage"
         payload = {"chat_id": chat_id, "text": text}
+        logger.info("Sending Telegram notification for order %s to chat %s", order_id, chat_id)
         async with httpx.AsyncClient() as client:
-            await client.post(url, json=payload, timeout=5)
+            resp = await client.post(url, json=payload, timeout=5)
+            logger.info("Telegram response for order %s: %s", order_id, resp.status_code)
+            if resp.status_code != 200:
+                logger.warning("Telegram API non-OK for order %s: %s", order_id, resp.text)
     except Exception:
-        pass
+        logger.exception("Telegram notification failed for order %s", order_id)
 
 
 @router.post("/guest", response_model=GuestOrderResponse, status_code=status.HTTP_201_CREATED)
