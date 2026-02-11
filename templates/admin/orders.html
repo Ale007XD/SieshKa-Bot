@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head><title>Admin Orders</title></head>
+  <body>
+    <h1>Admin Orders</h1>
+    <p>List of recent orders (mock data).</p>
+    <ul>
+      {% for o in orders %}
+      <li>Order {{ o.order_id }} - {{ o.status }}</li>
+      {% else %}
+      <li>No orders yet</li>
+      {% endfor %}
+    </ul>
+  </body>
+  </html>

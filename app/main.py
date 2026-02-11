@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import health, auth, menu, orders, settings, guest_orders
+from app.api.v1.endpoints import health, auth, menu, orders, settings, guest_orders, admin
 from app.config import settings
 from app.database import close_db, init_db
 
@@ -51,6 +51,10 @@ app.include_router(menu.router, prefix="/api/v1/menu", tags=["menu"])
 app.include_router(orders.router, prefix="/api/v1/orders", tags=["orders"])
 app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
 app.include_router(guest_orders.router, prefix="/api/v1/orders", tags=["guest_orders"])
+# Safe include for admin router (may be absent in some environments)
+_admin_router = getattr(admin, "router", None)
+if _admin_router is not None:
+    app.include_router(_admin_router, prefix="/admin", tags=["admin"])  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
