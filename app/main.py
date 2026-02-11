@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import health, auth, menu, orders, settings
+from app.api.v1.endpoints import health, auth, menu, orders, settings, guest_orders
 from app.config import settings
 from app.database import close_db, init_db
 
@@ -43,6 +43,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(menu.router, prefix="/api/v1/menu", tags=["menu"])
 app.include_router(orders.router, prefix="/api/v1/orders", tags=["orders"])
 app.include_router(settings.router, prefix="/api/v1/settings", tags=["settings"])
+app.include_router(guest_orders.router, prefix="/api/v1/orders", tags=["guest_orders"])
 
 
 if __name__ == "__main__":
