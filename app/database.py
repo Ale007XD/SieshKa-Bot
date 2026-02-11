@@ -72,7 +72,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             await session.close()
 
-
 async def init_db():
     """Initialize database tables."""
     if engine is None:
@@ -85,7 +84,6 @@ async def init_db():
             promo_code, delivery_zone, review, daily_counter
         )
         await conn.run_sync(Base.metadata.create_all)
-
 
 async def close_db():
     """Close database connections."""

@@ -6,7 +6,6 @@ import signal
 import sys
 
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
 
 from app.config import settings
 from app.database import close_db, init_db
@@ -44,7 +43,9 @@ async def main():
             pass
     
     # Initialize bot and dispatcher
-    bot = Bot(token=settings.bot_token, parse_mode=ParseMode.HTML)
+    if not settings.bot_token:
+        raise RuntimeError("BOT_TOKEN is not set in environment")
+    bot = Bot(token=settings.bot_token)
     dp = Dispatcher()
     
     # Register all handlers

@@ -1,4 +1,5 @@
 """Common handlers for all users."""
+from typing import Optional
 
 from aiogram import Router, F
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,8 +19,28 @@ router = Router()
 
 
 @router.message(CommandStart())
-async def cmd_start(message: Message, session: AsyncSession, user: User):
+async def cmd_start(message: Message, session: AsyncSession, user: Optional[User] = None):
     """Handle /start command."""
+    # If user is not injected by middleware, fetch or create from Telegram data
+    if user is None:
+        telegram_user = getattr(message, "from_user", None)
+        if telegram_user:
+            user_service = UserService(session)
+            user = await user_service.get_or_create_user(
+                telegram_id=telegram_user.id,
+                username=telegram_user.username,
+                first_name=telegram_user.first_name,
+                last_name=telegram_user.last_name
+            )
+        else:
+            class Guest:
+                first_name = None
+                def is_admin(self):
+                    return False
+                def is_staff(self):
+                    return False
+            user = Guest()
+            user.first_name = None
     await message.answer(
         Templates.welcome_message(user.first_name or "Друг"),
         reply_markup=get_main_menu_keyboard(user)
@@ -33,9 +54,16 @@ async def cmd_help(message: Message):
 
 
 @router.message(F.text == "◀️ Назад")
-async def back_handler(message: Message, state: FSMContext, user: User) -> None:
+async def back_handler(message: Message, state: FSMContext, user: Optional[User] = None) -> None:
     """Handle back button."""
     await state.clear()
+    
+    if user is None:
+        class Guest:
+            def is_admin(self): return False
+            def is_staff(self): return False
+            role = None
+        user = Guest()
     
     if user.is_admin():
         await message.answer(

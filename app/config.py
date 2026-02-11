@@ -84,43 +84,4 @@ class Settings(BaseSettings):
 
 
 # Global settings instance
-try:
-    settings = Settings()
-except Exception:
-    # Fallback for test environments; try to reuse real settings router if available
-    _dummy_settings_router = None
-    try:
-        from app.api.v1.endpoints import settings as _real_settings
-        _dummy_settings_router = _real_settings.router
-    except Exception:
-        _dummy_settings_router = APIRouter()
-        @_dummy_settings_router.get("/")  # type: ignore
-        async def _dummy_settings_root():  # type: ignore
-            return {"status": "ok"}
-        @_dummy_settings_router.get("/payment-methods")  # type: ignore
-        async def _dummy_payment_methods():  # type: ignore
-            return [{"code": "card", "name": "Credit Card"}]
-
-    class _DummySettings:
-        bot_token = "dummy_token"
-        database_url = "sqlite+aiosqlite:///:memory:"
-        redis_url = None
-        secret_key = "x" * 32
-        allowed_origins = ["*"]
-        admin_telegram_ids = []
-        timezone = "Europe/Moscow"
-        backup_enabled = False
-        backup_cron = "0 2 * * *"
-        backup_retention_days = 7
-        backup_dir = "/tmp/backups"
-        backup_tg_chat_id = None
-        backup_tg_thread_id = None
-        backup_max_tg_mb = 45
-        backup_compress_level = 6
-        feature_promo_codes = False
-        feature_delivery_zones = False
-        feature_reviews = False
-        feature_online_payments = False
-        feature_external_backup = False
-        router = _dummy_settings_router
-    settings = _DummySettings()
+settings = Settings()
