@@ -3,10 +3,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
-
-from app.api.v1.dependencies import get_db_session
 from app.config import settings
 
 router = APIRouter()
@@ -58,7 +54,7 @@ async def _notify_order(order_id: int, order: GuestOrderCreate):  # pragma: no c
 
 
 @router.post("/guest", response_model=GuestOrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_guest_order(order: GuestOrderCreate, session: AsyncSession = Depends(get_db_session)):
+async def create_guest_order(order: GuestOrderCreate):
     global _next_order_id
     order_id = _next_order_id
     _next_order_id += 1

@@ -4,6 +4,7 @@ import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.endpoints import health, auth, menu, orders, settings, guest_orders
@@ -36,6 +37,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve simple mobile shop frontend (guest orders)
+try:
+    app.mount("/shop", StaticFiles(directory="shop"), name="shop")
+except Exception:
+    pass
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1/health", tags=["health"])
