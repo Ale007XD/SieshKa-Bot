@@ -66,6 +66,22 @@ async def test_health_unhealthy_on_db_failure():
 
 
 @pytest.mark.asyncio
+async def test_health_unhealthy_on_db_scalar_exception():
+    class _BadScalar:
+        def scalar(self):
+            raise Exception("scalar error")
+    class _DBRaisesScalar:
+        async def execute(self, query):
+            return _BadScalar()
+    dummy_db = _DBRaisesScalar()
+    res = await health_check(dummy_db)  # type: ignore[arg-type]
+    assert isinstance(res, JSONResponse)
+    content = _decode_response(res)
+    assert content.get("status") == "unhealthy"
+    assert content.get("services", {}).get("database", "").startswith("error")
+
+
+@pytest.mark.asyncio
 async def test_health_all_ok_with_configured_redis(monkeypatch):
     # Setup fake Redis asyncio module
     redis_pkg = types.ModuleType("redis")
@@ -77,8 +93,8 @@ async def test_health_all_ok_with_configured_redis(monkeypatch):
             return
     async def _from_url_ok(url):
         return _FakeRedisClient()
-    redis_asyncio.from_url = _from_url_ok
-    redis_pkg.asyncio = redis_asyncio
+    setattr(redis_asyncio, "from_url", _from_url_ok)
+    setattr(redis_pkg, "asyncio", redis_asyncio)
     monkeypatch.setitem(sys.modules, "redis", redis_pkg)
     monkeypatch.setitem(sys.modules, "redis.asyncio", redis_asyncio)
 
@@ -105,8 +121,8 @@ async def test_health_redis_failure(monkeypatch):
             return
     async def _from_url_fail(url):
         return _FakeRedisClientFail()
-    redis_asyncio.from_url = _from_url_fail
-    redis_pkg.asyncio = redis_asyncio
+    setattr(redis_asyncio, "from_url", _from_url_fail)
+    setattr(redis_pkg, "asyncio", redis_asyncio)
     monkeypatch.setitem(sys.modules, "redis", redis_pkg)
     monkeypatch.setitem(sys.modules, "redis.asyncio", redis_asyncio)
 
