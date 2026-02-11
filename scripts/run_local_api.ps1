@@ -7,6 +7,13 @@ param(
   [switch]$SkipDeps
 )
 
+# Auto-detect CI environments to skip heavy deps when needed
+if (-not $PSBoundParameters.ContainsKey('SkipDeps')) {
+  if (($env:CI -eq "true") -or ($env:GITHUB_ACTIONS) -or ($env:CI -eq "1")) {
+    $SkipDeps = $true
+  }
+}
+
 $ErrorActionPreference = "Stop"
 
 # Определяем корень репозитория и директорию проекта
