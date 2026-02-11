@@ -154,3 +154,31 @@ async def test_health_redis_library_missing(monkeypatch):
     assert redis_status is not None
     ok = (redis_status in {"not_configured", "ok"} or (isinstance(redis_status, str) and redis_status.startswith("error")))
     assert ok
+
+
+@pytest.mark.asyncio
+async def test_health_redis_slow_ping(monkeypatch):
+    # Redis configured but ping is slow; should still be healthy if ping completes quickly
+    redis_pkg = types.ModuleType("redis")
+    redis_asyncio = types.ModuleType("redis.asyncio")
+    class _SlowRedisClient:
+        async def ping(self):
+            await asyncio.sleep(0.01)
+            return
+        async def close(self):
+            return
+    async def _from_url_slow(url):
+        return _SlowRedisClient()
+    setattr(redis_asyncio, "from_url", _from_url_slow)
+    setattr(redis_pkg, "asyncio", redis_asyncio)
+    monkeypatch.setitem(sys.modules, "redis", redis_pkg)
+    monkeypatch.setitem(sys.modules, "redis.asyncio", redis_asyncio)
+
+    from app import config as cfg
+    monkeypatch.setattr(cfg, "settings", SimpleNamespace(redis_url="redis://fake", admin_telegram_ids=[]))
+
+    dummy_db = _FakeDB()
+    res = await health_check(cast(Any, dummy_db))
+    content = _decode_response(res)
+    assert content["services"]["redis"] == "ok"
+    assert content["status"] == "healthy"
