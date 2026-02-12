@@ -1,6 +1,7 @@
 """Database configuration and session management."""
 
 from typing import AsyncGenerator
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
@@ -38,6 +39,7 @@ else:
 
 # Base class for models
 Base = declarative_base()
+logger = logging.getLogger(__name__)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -73,7 +75,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 async def init_db():
-    """Initialize database tables."""
+    """Initialize database tables and seed initial data if needed."""
     if engine is None:
         return
     async with engine.begin() as conn:
@@ -84,6 +86,20 @@ async def init_db():
             promo_code, delivery_zone, review, daily_counter
         )
         await conn.run_sync(Base.metadata.create_all)
+
+    # Seed initial categories if none exist
+    if AsyncSessionLocal is not None:
+        from sqlalchemy import select
+        from app.models.category import Category
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(Category))
+            existing = result.scalars().all()
+            if not existing:
+                seed_names = ["Пицца", "Суши", "Бургеры", "Напитки", "Десерты"]
+                categories = [Category(name=n) for n in seed_names]
+                session.add_all(categories)
+                await session.commit()
+                logger.info("Seeded categories: %s", ",".join(seed_names))
 
 async def close_db():
     """Close database connections."""
