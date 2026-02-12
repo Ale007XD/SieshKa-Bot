@@ -17,8 +17,11 @@ if os.environ.get("TESTING", "0") == "1":
 else:
     try:
         # Create async engine
+        db_url = settings.database_url
+        if not db_url:
+            raise RuntimeError("DATABASE_URL is not set")
         engine = create_async_engine(
-            settings.database_url,
+            db_url,
             echo=False,
             future=True,
             pool_pre_ping=True,
@@ -91,15 +94,18 @@ async def init_db():
     if AsyncSessionLocal is not None:
         from sqlalchemy import select
         from app.models.category import Category
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Category))
-            existing = result.scalars().all()
-            if not existing:
-                seed_names = ["Пицца", "Суши", "Бургеры", "Напитки", "Десерты"]
-                categories = [Category(name=n) for n in seed_names]
-                session.add_all(categories)
-                await session.commit()
-                logger.info("Seeded categories: %s", ",".join(seed_names))
+        try:
+            async with AsyncSessionLocal() as session:
+                result = await session.execute(select(Category))
+                existing = result.scalars().all()
+                if not existing:
+                    seed_names = ["Пицца", "Суши", "Бургеры", "Напитки", "Десерты"]
+                    categories = [Category(name=n) for n in seed_names]
+                    session.add_all(categories)
+                    await session.commit()
+                    logger.info("Seeded categories: %s", ",".join(seed_names))
+        except Exception as e:
+            logger.exception("Error seeding categories: %s", e)
 
 async def close_db():
     """Close database connections."""
