@@ -3,6 +3,7 @@
 from typing import List
 
 from app.models.order import Order
+from app.utils.enums import UserRole
 from app.utils.formatters import Formatters
 
 
@@ -155,23 +156,23 @@ class Templates:
     def staff_panel(role: str) -> str:
         """Staff panel message based on role."""
         panels = {
-            "manager": (
+            UserRole.MANAGER.value: (
                 "📋 <b>Панель менеджера</b>\n\n"
                 "• 📦 Новые заказы\n"
                 "• ✅ Подтверждение заказов\n"
                 "• 💳 Управление оплатами"
             ),
-            "kitchen": (
+            UserRole.KITCHEN.value: (
                 "👨‍🍳 <b>Панель кухни</b>\n\n"
                 "• 📋 Заказы в работе\n"
                 "• 🔥 Отметить готовым"
             ),
-            "packer": (
+            UserRole.PACKER.value: (
                 "📦 <b>Панель упаковщика</b>\n\n"
                 "• 🔥 Готовые блюда\n"
                 "• 📦 Отметить упакованным"
             ),
-            "courier": (
+            UserRole.COURIER.value: (
                 "🚚 <b>Панель курьера</b>\n\n"
                 "• 📦 Заказы на доставку\n"
                 "• 🚚 Взять в доставку\n"

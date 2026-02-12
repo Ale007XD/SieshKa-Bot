@@ -7,6 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from app.services.order_service import OrderService
+from app.utils.enums import UserRole
 from app.services.notification_service import NotificationService
 from app.utils.enums import OrderStatus
 from app.utils.formatters import Formatters
@@ -41,7 +42,7 @@ async def view_new_orders(callback: CallbackQuery, session: AsyncSession):
     
     await callback.message.edit_text(
         f"🆕 Новые заказы ({len(orders)}):",
-        reply_markup=get_orders_list_keyboard(orders, "manager")
+        reply_markup=get_orders_list_keyboard(orders, UserRole.MANAGER.value)
     )
 
 
@@ -68,7 +69,7 @@ async def view_order_details(callback: CallbackQuery, session: AsyncSession):
         
         await callback.message.edit_text(
             text,
-            reply_markup=get_order_actions_keyboard(order, "manager")
+            reply_markup=get_order_actions_keyboard(order, UserRole.MANAGER.value)
         )
     except Exception:
         await callback.answer("Заказ не найден", show_alert=True)

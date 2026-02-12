@@ -8,6 +8,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from app.models.order import Order
 from app.models.user import User
+from app.utils.enums import UserRole
 from app.utils.enums import OrderStatus
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class NotificationService:
             )
             
             # Notify managers
-            await self._notify_staff("manager", message)
+            await self._notify_staff(UserRole.MANAGER.value, message)
             
         except Exception as e:
             logger.error(f"Failed to notify order created: {e}")

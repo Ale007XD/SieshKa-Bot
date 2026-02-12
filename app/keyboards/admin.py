@@ -7,6 +7,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.models.category import Category
 from app.models.product import Product
 from app.models.user import User
+from app.utils.enums import UserRole
 
 
 def get_admin_menu_keyboard() -> InlineKeyboardMarkup:
@@ -99,13 +100,13 @@ def get_staff_management_keyboard(staff: List[User]) -> InlineKeyboardMarkup:
     """Get staff management keyboard."""
     buttons = []
     
-    for member in staff:
+for member in staff:
         role_emoji = {
-            "admin": "👑",
-            "manager": "📋",
-            "kitchen": "👨‍🍳",
-            "packer": "📦",
-            "courier": "🚚"
+            UserRole.ADMIN.value: "👑",
+            UserRole.MANAGER.value: "📋",
+            UserRole.KITCHEN.value: "👨‍🍳",
+            UserRole.PACKER.value: "📦",
+            UserRole.COURIER.value: "🚚"
         }.get(member.role, "👤")
         
         buttons.append([InlineKeyboardButton(

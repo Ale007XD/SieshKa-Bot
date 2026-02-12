@@ -3,6 +3,7 @@
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional
+from app.utils.enums import UserRole
 
 
 class Formatters:
@@ -80,12 +81,12 @@ class Formatters:
     def format_user_role(role: str) -> str:
         """Format user role for display."""
         role_map = {
-            "client": "👤 Клиент",
-            "admin": "👑 Администратор",
-            "manager": "📋 Менеджер",
-            "kitchen": "👨‍🍳 Кухня",
-            "packer": "📦 Упаковщик",
-            "courier": "🚚 Курьер",
+            UserRole.CLIENT.value: "👤 Клиент",
+            UserRole.ADMIN.value: "👑 Администратор",
+            UserRole.MANAGER.value: "📋 Менеджер",
+            UserRole.KITCHEN.value: "👨‍🍳 Кухня",
+            UserRole.PACKER.value: "📦 Упаковщик",
+            UserRole.COURIER.value: "🚚 Курьер",
         }
         return role_map.get(role, role)
     

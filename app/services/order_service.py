@@ -13,7 +13,7 @@ from app.models.order_item import OrderItem
 from app.models.product import Product
 from app.models.daily_counter import DailyCounter
 from app.models.user import User
-from app.utils.enums import OrderStatus, PaymentStatus
+from app.utils.enums import OrderStatus, PaymentStatus, UserRole
 from app.utils.exceptions import (
     NotFoundException,
     ValidationException,
@@ -268,7 +268,7 @@ class OrderService:
             select(User).where(
                 and_(
                     User.id == courier_id,
-                    User.role == "courier",
+                    User.role == UserRole.COURIER.value,
                     User.is_active == True
                 )
             )

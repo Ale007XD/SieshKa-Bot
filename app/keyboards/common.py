@@ -3,6 +3,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 
 from app.models.user import User
+from app.utils.enums import UserRole
 
 
 def get_main_menu_keyboard(user: User) -> ReplyKeyboardMarkup:
@@ -14,10 +15,10 @@ def get_main_menu_keyboard(user: User) -> ReplyKeyboardMarkup:
         ]
     elif user.is_staff():
         role_buttons = {
-            "manager": [KeyboardButton(text="📋 Панель менеджера")],
-            "kitchen": [KeyboardButton(text="👨‍🍳 Панель кухни")],
-            "packer": [KeyboardButton(text="📦 Панель упаковщика")],
-            "courier": [KeyboardButton(text="🚚 Панель курьера")],
+            UserRole.MANAGER.value: [KeyboardButton(text="📋 Панель менеджера")],
+            UserRole.KITCHEN.value: [KeyboardButton(text="👨‍🍳 Панель кухни")],
+            UserRole.PACKER.value: [KeyboardButton(text="📦 Панель упаковщика")],
+            UserRole.COURIER.value: [KeyboardButton(text="🚚 Панель курьера")],
         }
         buttons = [
             [KeyboardButton(text="📋 Меню"), KeyboardButton(text="🛒 Корзина")],
