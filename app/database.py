@@ -1,6 +1,6 @@
 """Database configuration and session management."""
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, cast
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -8,7 +8,6 @@ from sqlalchemy.orm import declarative_base
 
 import os
 from app.config import settings
-import typing as _typing
 
 # Create async engine with safe fallback for test environments without optional DB adapters
 if os.environ.get("TESTING", "0") == "1":
@@ -50,14 +49,20 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     if AsyncSessionLocal is None:
         class _DummyResult:
             def scalar(self):
-                return 1
+                return None
             def scalars(self):
                 class _Scalar:
-                    def all(self_inner):
+                    def all(self):
                         return []
                 return _Scalar()
 
-        class _DummySession:
+        class _DummySession(AsyncSession):  # type: ignore[misc]
+            def __init__(self, *args, **kwargs):  # pragma: no cover
+                pass
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, exc_type, exc, tb):
+                pass
             async def execute(self, *args, **kwargs):
                 return _DummyResult()
             async def close(self):
@@ -69,7 +74,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             def add(self, obj):
                 pass
         dummy = _DummySession()
-        yield dummy  # type: ignore
+        yield dummy  # type: ignore[no-redef]
         return
     async with AsyncSessionLocal() as session:
         try:

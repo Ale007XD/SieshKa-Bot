@@ -61,7 +61,7 @@ async def main():
     for router in get_all_routers():
         dp.include_router(router)
     
-    logger.info(f"Registered {len(get_all_routers())} routers")
+    logger.info("Registered %d routers", len(get_all_routers()))
     
     logger.info("Bot starting polling...")
     

@@ -4,7 +4,6 @@ from typing import List, Optional
 import json
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from fastapi import APIRouter
 
 
 class Settings(BaseSettings):
@@ -28,7 +27,6 @@ class Settings(BaseSettings):
     # Security
     secret_key: Optional[str] = Field(default=None, min_length=32, description="Secret key for JWT and encryption")
     allowed_origins: List[str] = Field(default_factory=lambda: ["http://localhost:3000"], description="Allowed CORS origins")
-    router: Optional[APIRouter] = None
 
     # Admin Configuration
     admin_telegram_ids: List[int] = Field(default_factory=list, description="List of admin Telegram IDs")
