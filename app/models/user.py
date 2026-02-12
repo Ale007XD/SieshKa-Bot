@@ -81,3 +81,5 @@ class User(BaseModel):
     def _in_roles(self, *roles: str) -> bool:
         """Helper to check if current role is among given roles."""
         return self.role in set(roles)
+
+# SAVED: 2026-02-12 09:56:20

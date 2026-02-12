@@ -32,6 +32,8 @@ class UserService:
             select(User).where(User.telegram_id == telegram_id)
         )
         return result.scalar_one_or_none()
+
+# SAVED: 2026-02-12 09:56:50
     
     async def get_or_create_user(
         self,

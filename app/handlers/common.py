@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart
+from app.utils.enums import UserRole
 from aiogram.fsm.context import FSMContext
 
 from app.services.user_service import UserService

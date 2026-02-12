@@ -44,6 +44,8 @@ class OrderService:
         if not order:
             raise NotFoundException("Order", str(order_id))
         return order
+
+# SAVED: 2026-02-12 09:56:40
     
     async def get_order_by_number(self, order_number: str) -> Order:
         """Get order by order number."""

@@ -58,3 +58,5 @@ STAFF_ROLES = {
 CLIENT_ROLES = {UserRole.CLIENT.value}
 ADMIN_ROLES = {UserRole.ADMIN.value}
 MANAGER_ROLES = {UserRole.MANAGER.value}
+
+# SAVED: 2026-02-12 09:56:25
