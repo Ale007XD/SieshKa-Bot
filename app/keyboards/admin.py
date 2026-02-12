@@ -8,6 +8,7 @@ from app.models.category import Category
 from app.models.product import Product
 from app.models.user import User
 from app.utils.enums import UserRole
+from sqlalchemy import select
 
 
 def get_admin_menu_keyboard() -> InlineKeyboardMarkup:
@@ -122,6 +123,9 @@ def get_staff_management_keyboard(staff: List[User]) -> InlineKeyboardMarkup:
     buttons.append([InlineKeyboardButton(text="◀️ Назад", callback_data="back")])
     
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+ # edit_category handler moved to app/handlers/admin.py; removed from keyboard module to avoid routing conflicts
 
 
 def get_order_management_keyboard() -> InlineKeyboardMarkup:
