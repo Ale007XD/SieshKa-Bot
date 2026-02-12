@@ -46,3 +46,15 @@ class DiscountType(str, Enum):
     """Discount types for promo codes."""
     FIXED = "fixed"
     PERCENT = "percent"
+
+# Convenience role groupings for quick role checks across modules
+STAFF_ROLES = {
+    UserRole.ADMIN.value,
+    UserRole.MANAGER.value,
+    UserRole.KITCHEN.value,
+    UserRole.PACKER.value,
+    UserRole.COURIER.value,
+}
+CLIENT_ROLES = {UserRole.CLIENT.value}
+ADMIN_ROLES = {UserRole.ADMIN.value}
+MANAGER_ROLES = {UserRole.MANAGER.value}

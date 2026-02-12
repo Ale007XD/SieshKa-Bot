@@ -8,13 +8,15 @@ from sqlalchemy import Boolean, BigInteger, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import BaseModel
-from app.utils.enums import UserRole
+from app.utils.enums import UserRole, STAFF_ROLES, ADMIN_ROLES, MANAGER_ROLES, CLIENT_ROLES
 
 
 class User(BaseModel):
     """User model representing all roles in the system."""
 
     __tablename__ = "users"
+
+    # Roles are defined in enums and imported as STAFF_ROLES, ADMIN_ROLES, MANAGER_ROLES, CLIENT_ROLES
 
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True, nullable=False)
     username: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -62,18 +64,20 @@ class User(BaseModel):
 
     def is_admin(self) -> bool:
         """Check if user is admin."""
-        return self.role == UserRole.ADMIN.value
+        return self._in_roles(*ADMIN_ROLES)
 
     def is_manager(self) -> bool:
         """Check if user is manager."""
-        return self.role == UserRole.MANAGER.value
+        return self._in_roles(*MANAGER_ROLES)
 
     def is_staff(self) -> bool:
         """Check if user is any staff member."""
-        return self.role in [
-            UserRole.ADMIN.value,
-            UserRole.MANAGER.value,
-            UserRole.KITCHEN.value,
-            UserRole.PACKER.value,
-            UserRole.COURIER.value
-        ]
+        return self._in_roles(*STAFF_ROLES)
+
+    def is_client(self) -> bool:
+        """Check if user is a client."""
+        return self._in_roles(*CLIENT_ROLES)
+
+    def _in_roles(self, *roles: str) -> bool:
+        """Helper to check if current role is among given roles."""
+        return self.role in set(roles)

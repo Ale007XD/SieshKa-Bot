@@ -83,10 +83,20 @@ async def back_handler(message: Message, state: FSMContext, user: Optional[User]
 
 
 @router.callback_query(F.data == "back")
-async def back_callback(callback: CallbackQuery, state: FSMContext, user: User) -> None:
+async def back_callback(callback: CallbackQuery, state: FSMContext, user: Optional[User] = None) -> None:
     """Handle back callback."""
     await callback.answer()
     await state.clear()
+    
+    # If user is not injected by middleware, create a lightweight guest user
+    if user is None:
+        class Guest:
+            def is_admin(self):
+                return False
+            def is_staff(self):
+                return False
+            role = None
+        user = Guest()
     
     if user.is_admin():
         await callback.message.edit_text(

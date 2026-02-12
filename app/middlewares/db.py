@@ -21,8 +21,4 @@ class DBSessionMiddleware(BaseMiddleware):
         """Create and provide database session."""
         async with AsyncSessionLocal() as session:
             data["session"] = session
-            try:
-                result = await handler(event, data)
-                return result
-            finally:
-                await session.close()
+            return await handler(event, data)
