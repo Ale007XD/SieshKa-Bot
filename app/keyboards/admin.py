@@ -100,7 +100,7 @@ def get_staff_management_keyboard(staff: List[User]) -> InlineKeyboardMarkup:
     """Get staff management keyboard."""
     buttons = []
     
-for member in staff:
+    for member in staff:
         role_emoji = {
             UserRole.ADMIN.value: "👑",
             UserRole.MANAGER.value: "📋",
