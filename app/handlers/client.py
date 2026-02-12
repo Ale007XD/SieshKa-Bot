@@ -419,3 +419,22 @@ async def refresh_menu(callback: CallbackQuery, session):
         Templates.menu_header(),
         reply_markup=get_categories_keyboard(categories)
     )
+
+@router.callback_query(F.data.startswith("back_to_category:"))
+async def back_to_category(callback: CallbackQuery, session: AsyncSession):
+    """Return from product details to the product list of a category."""
+    data = callback.data or ""
+    parts = data.split(":")
+    if len(parts) < 2:
+        await callback.answer("Неверные данные", show_alert=True)
+        return
+    category_id = int(parts[1])
+    menu_service = MenuService(session)
+    products = await menu_service.get_products_by_category(category_id)
+    if products:
+        await callback.message.edit_text(
+            "🍽 Выберите блюдо:",
+            reply_markup=get_products_keyboard(products, category_id)
+        )
+    else:
+        await callback.answer("В этой категории пока ничего нет", show_alert=True)
