@@ -3,7 +3,8 @@
 from aiogram import Router, F
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
-from typing import Any
+from typing import Any, Optional
+from app.services.user_service import UserService
 # NOTE: 'User' here is the ORM model (DB entity) defined in app/models/user.py.
 # The bot layer uses this entity as the user context (id, etc).
 from aiogram.types import Message, CallbackQuery
@@ -35,8 +36,20 @@ router = Router()
 
 # Main menu
 @router.message(F.text == "📋 Меню")
-async def show_menu(message: Message, session: AsyncSession, user: User) -> None:
+async def show_menu(message: Message, session: AsyncSession, user: Optional[User] = None) -> None:
     """Show menu categories."""
+    if user is None:
+        telegram_user = getattr(message, "from_user", None)
+        if telegram_user:
+            user = await UserService(session).get_or_create_user(
+                telegram_id=telegram_user.id,
+                username=telegram_user.username,
+                first_name=telegram_user.first_name,
+                last_name=telegram_user.last_name
+            )
+        else:
+            await message.answer("Пожалуйста, начните с /start и создайте профиль, чтобы использовать меню.")
+            return
     menu_service = MenuService(session)
     categories = await menu_service.get_category_tree(include_inactive=False, include_archived=False)
     
@@ -53,7 +66,12 @@ async def show_menu(message: Message, session: AsyncSession, user: User) -> None
 @router.callback_query(F.data.startswith("category:"))
 async def show_category(callback: CallbackQuery, session: AsyncSession):
     """Show category contents."""
-    category_id = int(callback.data.split(":")[1])
+    data = callback.data or ""
+    parts = data.split(":")
+    if len(parts) < 2:
+        await callback.answer("Неверные данные", show_alert=True)
+        return
+    category_id = int(parts[1])
     menu_service = MenuService(session)
     
     # Get subcategories
@@ -85,7 +103,12 @@ async def show_category(callback: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("product:"))
 async def show_product(callback: CallbackQuery, session: AsyncSession):
     """Show product details."""
-    product_id = int(callback.data.split(":")[1])
+    data = callback.data or ""
+    parts = data.split(":")
+    if len(parts) < 2:
+        await callback.answer("Неверные данные", show_alert=True)
+        return
+    product_id = int(parts[1])
     menu_service = MenuService(session)
     
     try:
@@ -108,7 +131,12 @@ async def show_product(callback: CallbackQuery, session: AsyncSession):
 @router.callback_query(F.data.startswith("add_to_cart:"))
 async def add_to_cart(callback: CallbackQuery, session: AsyncSession, user: User):
     """Add product to cart."""
-    product_id = int(callback.data.split(":")[1])
+    data = callback.data or ""
+    parts = data.split(":")
+    if len(parts) < 2:
+        await callback.answer("Неверные данные", show_alert=True)
+        return
+    product_id = int(parts[1])
     cart_service = CartService(session)
     
     try:
@@ -120,10 +148,22 @@ async def add_to_cart(callback: CallbackQuery, session: AsyncSession, user: User
 
 # Cart
 @router.message(F.text == "🛒 Корзина")
-async def show_cart(message: Message, session: AsyncSession, user: User):
+async def show_cart(message: Message, session: AsyncSession, user: Optional[User] = None):
     """Show cart contents."""
+    if user is None:
+        telegram_user = getattr(message, "from_user", None)
+        if telegram_user:
+            user = await UserService(session).get_or_create_user(
+                telegram_id=telegram_user.id,
+                username=telegram_user.username,
+                first_name=telegram_user.first_name,
+                last_name=telegram_user.last_name
+            )
+        else:
+            await message.answer("Пожалуйста, начните с /start и создайте профиль, чтобы использовать корзину.")
+            return
     cart_service = CartService(session)
-    cart_summary = await cart_service.get_cart_summary(user.id)
+    cart_summary = await cart_service.get_cart_summary(user.id)  # type: ignore[arg-type]
     
     if not cart_summary["items"]:
         await message.answer(Templates.empty_cart())
@@ -300,8 +340,20 @@ async def process_payment(callback: CallbackQuery, state: FSMContext, session, u
 
 # Orders
 @router.message(F.text == "📦 Мои заказы")
-async def show_orders(message: Message, session, user):
+async def show_orders(message: Message, session, user: Optional[User] = None):
     """Show user's orders."""
+    if user is None:
+        telegram_user = getattr(message, "from_user", None)
+        if telegram_user:
+            user = await UserService(session).get_or_create_user(
+                telegram_id=telegram_user.id,
+                username=telegram_user.username,
+                first_name=telegram_user.first_name,
+                last_name=telegram_user.last_name
+            )
+        else:
+            await message.answer("Пожалуйста, начните с /start и создайте профиль, чтобы использовать заказы.")
+            return
     order_service = OrderService(session)
     orders = await order_service.get_user_orders(user.id, limit=10)
     
@@ -318,7 +370,12 @@ async def show_orders(message: Message, session, user):
 @router.callback_query(F.data.startswith("order:"))
 async def show_order_details(callback: CallbackQuery, session):
     """Show order details."""
-    order_id = int(callback.data.split(":")[1])
+    data = callback.data or ""
+    parts = data.split(":")
+    if len(parts) < 2:
+        await callback.answer("Неверные данные", show_alert=True)
+        return
+    order_id = int(parts[1])
     order_service = OrderService(session)
     
     try:
